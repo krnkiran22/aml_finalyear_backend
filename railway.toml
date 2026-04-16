@@ -1,9 +1,8 @@
 [build]
-builder = "nixpacks"
-buildCommand = "npm ci && npx prisma generate && npm run build"
+builder = "dockerfile"
 
 [deploy]
-startCommand = "npx prisma migrate deploy && npm start"
+startCommand = "node dist/index.js"
 restartPolicyType = "always"
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
