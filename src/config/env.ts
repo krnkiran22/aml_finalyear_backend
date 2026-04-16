@@ -13,7 +13,7 @@ const envSchema = z.object({
   ORACLE_PRIVATE_KEY: z.string().optional(),
   CONTRACT_AML_REGISTRY: z.string().optional(),
   CONTRACT_TX_MONITOR: z.string().optional(),
-  REDIS_URL: z.string().default('redis://localhost:6379'),
+  REDIS_URL: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
   AWS_BUCKET_NAME: z.string().default('chainguard-kyc-docs'),

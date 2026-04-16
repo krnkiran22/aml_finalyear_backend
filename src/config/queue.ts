@@ -1,17 +1,29 @@
-import { Queue, Worker, QueueEvents } from 'bullmq';
-import IORedis from 'ioredis';
 import { env } from './env';
 
-export const redisConnection = new IORedis(env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-});
+// Redis and BullMQ are optional — only initialised if REDIS_URL is set.
+// Without Redis the server runs fine; only background score refresh is disabled.
 
-export const behaviouralScoreQueue = new Queue('behavioural-score', {
-  connection: redisConnection,
-});
+let redisConnection: import('ioredis').default | null = null;
+let behaviouralScoreQueue: import('bullmq').Queue | null = null;
 
-export const behaviouralScoreQueueEvents = new QueueEvents('behavioural-score', {
-  connection: redisConnection,
-});
+export function getRedisConnection() {
+  if (!env.REDIS_URL) return null;
+  if (!redisConnection) {
+    const IORedis = require('ioredis');
+    redisConnection = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });
+  }
+  return redisConnection;
+}
 
-export { Worker };
+export function getBehaviouralScoreQueue() {
+  if (!env.REDIS_URL) return null;
+  if (!behaviouralScoreQueue) {
+    const { Queue } = require('bullmq');
+    behaviouralScoreQueue = new Queue('behavioural-score', {
+      connection: getRedisConnection()!,
+    });
+  }
+  return behaviouralScoreQueue;
+}
+
+export { };
