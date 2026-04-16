@@ -70,6 +70,10 @@ export class TransactionRepository {
     });
   }
 
+  async countByUser(userId: string): Promise<number> {
+    return prisma.transaction.count({ where: { userId } });
+  }
+
   async getStats() {
     const [flaggedTransactions, blockedTransactions, totalTransactions, avgResult] =
       await Promise.all([

@@ -6,6 +6,7 @@ import userRoutes from './user.routes';
 import transactionRoutes from './transaction.routes';
 import alertRoutes from './alert.routes';
 import adminRoutes from './admin.routes';
+import lookupRoutes from './lookup.routes';
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use('/user', userRoutes);
 router.use('/transactions', transactionRoutes);
 router.use('/alerts', alertRoutes);
 router.use('/admin', adminRoutes);
+router.use('/lookup', lookupRoutes);
 
 export default router;
