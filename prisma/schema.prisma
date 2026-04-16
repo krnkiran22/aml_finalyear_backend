@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String             @id @default(cuid())
+  walletAddress       String             @unique
+  email               String?            @unique
+  fullName            String?
+  dateOfBirth         DateTime?
+  country             String?
+  countryCode         String?
+  annualIncomeUSD     Float?
+  monthlyThreshold    Float?
+  kycStatus           KYCStatus          @default(PENDING)
+  kycDocumentType     DocumentType?
+  kycDocumentUrl      String?
+  kycDocumentNumber   String?
+  kycVerifiedAt       DateTime?
+  kycRejectedReason   String?
+  currentRiskScore    Float?
+  currentRiskLevel    RiskLevel?
+  isAdmin             Boolean            @default(false)
+  isActive            Boolean            @default(true)
+  lastScoreCalculated DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  transactions        Transaction[]
+  riskScoreHistory    RiskScoreHistory[]
+  alerts              Alert[]
+}
+
+model Transaction {
+  id                String            @id @default(cuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id])
+  txHash            String?           @unique
+  fromAddress       String
+  toAddress         String
+  amountETH         Float
+  amountUSD         Float
+  currency          String            @default("ETH")
+  compositeScore    Float
+  score1Country     Float
+  score2Transaction Float
+  score3Behaviour   Float
+  riskLevel         RiskLevel
+  status            TransactionStatus
+  flagReason        String?
+  onChainLogged     Boolean           @default(false)
+  timestamp         DateTime
+  createdAt         DateTime          @default(now())
+
+  @@index([userId])
+  @@index([riskLevel])
+}
+
+model RiskScoreHistory {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id])
+  compositeScore    Float
+  score1Country     Float
+  score2Transaction Float
+  score3Behaviour   Float
+  riskLevel         RiskLevel
+  calculatedAt      DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Alert {
+  id         String        @id @default(cuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  type       AlertType
+  message    String
+  severity   AlertSeverity
+  metadata   Json?
+  resolved   Boolean       @default(false)
+  resolvedAt DateTime?
+  resolvedBy String?
+  createdAt  DateTime      @default(now())
+
+  @@index([userId])
+  @@index([resolved])
+}
+
+model CountryRisk {
+  id          String     @id @default(cuid())
+  countryCode String     @unique
+  countryName String
+  baseScore   Float
+  fatfStatus  FATFStatus
+  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime   @default(now())
+}
+
+enum KYCStatus {
+  PENDING
+  UNDER_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+enum DocumentType {
+  AADHAAR
+  PAN
+  PASSPORT
+  DRIVING_LICENSE
+}
+
+enum RiskLevel {
+  SAFE
+  LOW_RISK
+  FLAGGED
+  HIGH_RISK
+}
+
+enum TransactionStatus {
+  APPROVED
+  MONITORING
+  HELD
+  BLOCKED
+}
+
+enum AlertType {
+  KYC_FAILED
+  KYC_VERIFIED
+  HIGH_RISK_TRANSACTION
+  THRESHOLD_EXCEEDED
+  BEHAVIOURAL_ANOMALY
+  ACCOUNT_FLAGGED
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum FATFStatus {
+  LOW_RISK
+  GREY_LIST
+  HIGH_RISK
+  BLACKLISTED
+}

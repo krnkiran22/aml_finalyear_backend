@@ -1,0 +1,7 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pnpm install && pnpm --filter @chainguard/database exec prisma generate && pnpm --filter @chainguard/api build"
+
+[deploy]
+startCommand = "pnpm --filter @chainguard/database exec prisma migrate deploy && pnpm --filter @chainguard/api start"
+restartPolicyType = "always"

@@ -1,0 +1,10 @@
+node_modules
+.env
+dist
+*.log
+.DS_Store
+*.tsbuildinfo
+blockchain/artifacts
+blockchain/cache
+blockchain/typechain-types
+blockchain/ignition/deployments
