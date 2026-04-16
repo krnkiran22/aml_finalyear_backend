@@ -20,10 +20,30 @@ export interface OCRResult {
   rawResponse: string;
 }
 
+function mockOCRResult(): OCRResult {
+  return {
+    extractedData: {
+      documentType: 'PASSPORT',
+      fullName: 'Demo User',
+      dateOfBirth: '1995-01-01',
+      documentNumber: 'DEMO' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+      country: 'IN',
+      expiryDate: '2030-01-01',
+    },
+    confidence: 0.95,
+    rawResponse: '{"mock":true}',
+  };
+}
+
 export async function extractDocumentData(
   imageBase64: string,
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp' | 'application/pdf',
 ): Promise<OCRResult> {
+  if (!env.ANTHROPIC_API_KEY) {
+    console.warn('ANTHROPIC_API_KEY not set — using mock OCR result for dev/testing');
+    return mockOCRResult();
+  }
+
   const client = getClient();
 
   const prompt = `Analyse this identity document image and extract the following information:

@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'fs';
 import { v2 as cloudinary } from 'cloudinary';
 import { userRepository } from '../repositories/user.repository';
 import { alertRepository } from '../repositories/alert.repository';
@@ -5,10 +7,49 @@ import { extractDocumentData } from './ocr.service';
 import { blockchainService } from './blockchain.service';
 import { AppError } from '../middleware/error';
 import { KYCStatus } from '../shared';
+import { env } from '../config/env';
 
 export interface UploadDocumentResult {
   documentUrl: string;
   uploadedAt: string;
+}
+
+async function uploadToCloudinary(
+  fileBuffer: Buffer,
+  userId: string,
+  documentType: string,
+): Promise<string> {
+  const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        {
+          folder: 'chainguard-kyc',
+          resource_type: 'auto',
+          public_id: `kyc-${userId}-${Date.now()}`,
+          tags: ['kyc', documentType, userId],
+        },
+        (error, res) => {
+          if (error) reject(new Error(`Cloudinary upload failed: ${error.message}`));
+          else resolve(res as { secure_url: string });
+        },
+      )
+      .end(fileBuffer);
+  });
+  return result.secure_url;
+}
+
+async function uploadToLocal(
+  fileBuffer: Buffer,
+  mimeType: string,
+  userId: string,
+): Promise<string> {
+  const ext = mimeType.includes('pdf') ? '.pdf' : mimeType.includes('png') ? '.png' : '.jpg';
+  const filename = `kyc-${userId}-${Date.now()}${ext}`;
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  fs.writeFileSync(path.join(uploadsDir, filename), fileBuffer);
+  const port = env.PORT ?? '4000';
+  return `http://localhost:${port}/uploads/${filename}`;
 }
 
 export async function uploadKYCDocument(
@@ -20,32 +61,21 @@ export async function uploadKYCDocument(
   const user = await userRepository.findById(userId);
   if (!user) throw new AppError(404, 'User not found');
 
-  // Upload to Cloudinary
-  const uploadResult = await new Promise<{ secure_url: string }>((resolve, reject) => {
-    cloudinary.uploader
-      .upload_stream(
-        {
-          folder: 'chainguard-kyc',
-          resource_type: 'auto',
-          public_id: `kyc-${userId}-${Date.now()}`,
-          tags: ['kyc', documentType, userId],
-        },
-        (error, result) => {
-          if (error) reject(new Error(`Cloudinary upload failed: ${error.message}`));
-          else resolve(result as { secure_url: string });
-        },
-      )
-      .end(fileBuffer);
-  });
+  const isCloudinaryConfigured =
+    env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET;
+
+  const documentUrl = isCloudinaryConfigured
+    ? await uploadToCloudinary(fileBuffer, userId, documentType)
+    : await uploadToLocal(fileBuffer, mimeType, userId);
 
   await userRepository.update(userId, {
-    kycDocumentUrl: uploadResult.secure_url,
+    kycDocumentUrl: documentUrl,
     kycDocumentType: documentType as never,
     kycStatus: 'UNDER_REVIEW',
   });
 
   return {
-    documentUrl: uploadResult.secure_url,
+    documentUrl,
     uploadedAt: new Date().toISOString(),
   };
 }

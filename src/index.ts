@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import path from 'path';
 import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -41,6 +42,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configure external services
 configureCloudinary();
+
+// Serve locally uploaded KYC files (fallback when Cloudinary is not configured)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health check
 app.get('/health', (_req, res) => {
