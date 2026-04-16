@@ -1,7 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pnpm install && pnpm --filter @chainguard/database exec prisma generate && pnpm --filter @chainguard/api build"
+buildCommand = "npm ci && npx prisma generate && npm run build"
 
 [deploy]
-startCommand = "pnpm --filter @chainguard/database exec prisma migrate deploy && pnpm --filter @chainguard/api start"
+startCommand = "npx prisma migrate deploy && npm start"
 restartPolicyType = "always"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
