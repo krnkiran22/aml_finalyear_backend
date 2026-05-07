@@ -12,6 +12,7 @@ import { startBehaviouralScoreWorker, setupDailyScoreRefreshSchedule } from './j
 import routes from './routes';
 
 const app: Express = express();
+const RELEASE_MARKER = '2026-05-07-etherscan-v2-ready';
 
 // Security middleware
 app.use(helmet());
@@ -48,7 +49,12 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health check
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    service: 'chainguard-api',
+    release: RELEASE_MARKER,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // API Routes

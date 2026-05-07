@@ -9,6 +9,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
   ANTHROPIC_API_KEY: z.string().optional(),
   ETHERSCAN_API_KEY: z.string().optional(),
+  ETHERSCAN_API_URL: z.string().url().default('https://api.etherscan.io/v2/api'),
+  ETHERSCAN_CHAIN_ID: z.string().default('11155111'),
   RPC_URL: z.string().optional(),
   ORACLE_PRIVATE_KEY: z.string().optional(),
   CONTRACT_AML_REGISTRY: z.string().optional(),
