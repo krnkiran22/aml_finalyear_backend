@@ -11,7 +11,7 @@ export async function lookupWallet(
 ): Promise<void> {
   try {
     const walletAddress = walletSchema.parse(req.params['walletAddress']);
-    const result = await lookupWalletRisk(walletAddress);
+    const result = await lookupWalletRisk(walletAddress, req.user?.userId);
     res.json(result);
   } catch (err) {
     next(err);

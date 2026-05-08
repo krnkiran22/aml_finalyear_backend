@@ -12,16 +12,31 @@ import { startBehaviouralScoreWorker, setupDailyScoreRefreshSchedule } from './j
 import routes from './routes';
 
 const app: Express = express();
-const RELEASE_MARKER = '2026-05-07-etherscan-v2-ready';
+const RELEASE_MARKER = '2026-05-08-live-wallet-risk';
+const configuredOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean);
+
+function isAllowedOrigin(origin: string): boolean {
+  if (env.CORS_ORIGIN === '*') return true;
+  if (configuredOrigins.includes(origin)) return true;
+  if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
+  if (/^http:\/\/localhost:\d+$/i.test(origin)) return true;
+  if (/^http:\/\/127\.0\.0\.1:\d+$/i.test(origin)) return true;
+  return false;
+}
 
 // Security middleware
 app.use(helmet());
 app.use(
   cors({
-    origin: env.CORS_ORIGIN === '*'
-      ? true
-      : env.CORS_ORIGIN.split(',').map((o) => o.trim()),
+    origin(origin, callback) {
+      if (!origin || isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`CORS blocked for origin ${origin}`));
+    },
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
 
